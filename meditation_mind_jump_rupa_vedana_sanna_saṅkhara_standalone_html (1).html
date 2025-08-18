@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Meditation Mind Jump — รูป · เวทนา · สัญญา · สังขาร</title>
+  <style>
+    :root {
+      --bg1:#0d1024; --bg2:#121639; --panel:#171b44; --ink:#e8ecff;
+      --muted:#a8b1ff; --glow:#77ffd6; --line:#3a4072; --accent:#a8ff78;
+    }
+    * { box-sizing: border-box }
+    html,body { height:100% }
+    body{
+      margin:0; color:var(--ink); font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, "Noto Sans Thai", "Noto Sans", Inter, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 20% 10%, #1a2052, #0d1024 55%),
+                  radial-gradient(1000px 900px at 80% 120%, #14183c, #0d1024 60%),
+                  linear-gradient(180deg, var(--bg1), var(--bg2));
+      overflow-x:hidden;
+    }
+    header{
+      padding:18px 22px; position:sticky; top:0; z-index:3; backdrop-filter: blur(8px);
+      background: linear-gradient(180deg, rgba(10,12,30,.7), rgba(10,12,30,.2));
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    header h1{ margin:0; font-weight:800; letter-spacing:.3px; font-size:clamp(18px, 2.4vw, 24px) }
+    header .sub{ color:#b8befa; font-size:12px; opacity:.9 }
+
+    .wrap{ max-width:1100px; margin:0 auto; padding:16px; }
+
+    .board{
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:18px; padding:10px; box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    }
+    svg{ width:100%; height:auto; display:block; border-radius:12px; }
+
+    .controls{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:14px; }
+    .controls .group{ background:var(--panel); border:1px solid rgba(255,255,255,.06); padding:10px 12px; border-radius:12px; display:flex; gap:10px; align-items:center }
+    .btn{ appearance:none; border:1px solid #5e66a8; color:var(--ink); background:#14183c; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:650 }
+    .btn[aria-pressed="true"], .btn.primary{ border-color:transparent; background:linear-gradient(180deg, #2f6dff, #2a48a0); box-shadow: 0 8px 22px rgba(69,105,255,.35)}
+    .btn:disabled{ opacity:.6; cursor:not-allowed }
+    .range{ accent-color:#6be7ff }
+    .hint{ color:#c7cdfc; opacity:.9; font-size:12px }
+
+    .legend{ display:grid; grid-template-columns: repeat(4, minmax(140px,1fr)); gap:10px; margin-top:10px }
+    .card{ background:var(--panel); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:10px }
+    .card h4{ margin:0 0 4px 0; font-size:14px }
+    .card p{ margin:0; font-size:12px; color:#cdd3ff }
+
+    /* SVG Decorations */
+    .node circle.base { fill:url(#nodeGrad); stroke:#7b84d9; stroke-opacity:.35; stroke-width:2 }
+    .node text{ font-weight:700; text-anchor:middle; dominant-baseline:middle; font-size:14px; pointer-events:none; fill:#ffffff }
+    .node .en{ opacity:.85; font-weight:600; font-size:12px; fill:#ffffff }
+
+    .mind{ filter:url(#mindGlow) }
+    .trail{ stroke:#7af6ff; stroke-opacity:.28; stroke-width:2; fill:none }
+    .link{ stroke:var(--line); stroke-dasharray:4 6; stroke-width:1; opacity:.6 }
+
+    @keyframes breathe { 0% { transform: scale(0.96) } 50% { transform: scale(1.04) } 100%{ transform: scale(0.96) } }
+    #breathRing{ transform-box: fill-box; transform-origin: 50% 50%; animation: breathe 6s ease-in-out infinite; }
+
+    #log{ margin-top:10px; font-size:12px; color:#cdd3ff; max-height:90px; overflow:auto; white-space:pre-line }
+    .kicker{ color:#8efbe7; font-weight:700 }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Meditation Mind Jump — <span class="kicker">รูป</span> · เวทนา · สัญญา · สังขาร</h1>
+      <div class="sub">A playful meditation simulator showing the mind wandering among khandhas (aggregates). Press <b>Space</b> to return to the breath.</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="board">
+      <!-- 900×600 viewbox is comfortable for layout; SVG scales responsively -->
+      <svg id="board" viewBox="0 0 900 600" role="img" aria-label="Meditation simulator">
+        <defs>
+          <linearGradient id="nodeGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#25306e"/>
+            <stop offset="100%" stop-color="#101438"/>
+          </linearGradient>
+          <radialGradient id="mindGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="40%" stop-color="#c0fff4"/>
+            <stop offset="100%" stop-color="#00ffd9" stop-opacity="0.05"/>
+          </radialGradient>
+          <filter id="mindGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="6" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <filter id="pulseBlur" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2" />
+          </filter>
+        </defs>
+
+        <!-- Guide circle -->
+        <circle cx="450" cy="300" r="240" fill="none" stroke="#2c326b" stroke-opacity=".5" stroke-dasharray="2 10" />
+
+        <!-- Center breath ring -->
+        <g id="breath">
+          <circle id="breathRing" cx="450" cy="300" r="56" fill="none" stroke="#7af6ff" stroke-opacity=".45" stroke-width="2" />
+          <text x="450" y="300" text-anchor="middle" dominant-baseline="middle" font-size="13" fill="#c8d4ff">ลมหายใจ • Breath</text>
+        </g>
+
+        <!-- Links from center to nodes -->
+        <line class="link" x1="450" y1="300" x2="450" y2="110" />
+        <line class="link" x1="450" y1="300" x2="720" y2="300" />
+        <line class="link" x1="450" y1="300" x2="450" y2="490" />
+        <line class="link" x1="450" y1="300" x2="180" y2="300" />
+
+        <!-- Nodes: รูป, เวทนา, สัญญา, สังขาร -->
+        <g id="nodes">
+          <g class="node" data-idx="0" transform="translate(450,110)">
+            <circle class="base" r="46"/>
+            <text y="-4">รูป</text>
+            <text class="en" y="14">Form</text>
+          </g>
+          <g class="node" data-idx="1" transform="translate(720,300)">
+            <circle class="base" r="46"/>
+            <text y="-4">เวทนา</text>
+            <text class="en" y="14">Feeling</text>
+          </g>
+          <g class="node" data-idx="2" transform="translate(450,490)">
+            <circle class="base" r="46"/>
+            <text y="-4">สัญญา</text>
+            <text class="en" y="14">Perception</text>
+          </g>
+          <g class="node" data-idx="3" transform="translate(180,300)">
+            <circle class="base" r="46"/>
+            <text y="-4">สังขาร</text>
+            <text class="en" y="14">Formations</text>
+          </g>
+        </g>
+
+        <!-- Trail and the moving mind -->
+        <polyline id="trail" class="trail" points="" />
+        <circle id="mind" class="mind" r="12" cx="450" cy="300" fill="url(#mindGrad)" stroke="#b7fff1" stroke-opacity=".6" />
+      </svg>
+    </section>
+
+    <div class="controls">
+      <div class="group">
+        <button id="toggle" class="btn primary">⏸ Pause</button>
+        <button id="home" class="btn" title="Return to breath (Space)">↩︎ Breath</button>
+      </div>
+      <div class="group">
+        <label>Speed <input id="speed" class="range" type="range" min="0.5" max="2.0" step="0.1" value="1"/></label>
+        <label><input id="jitter" type="checkbox" checked /> Jitter</label>
+        <label><input id="autoHome" type="checkbox" /> Auto‑return</label>
+        <label><input id="soundOn" type="checkbox" checked /> Sound</label>
+      </div>
+      <div class="group">
+        <label>Labels <select id="lang">
+          <option value="th-en" selected>ไทย + EN</option>
+          <option value="th">ไทย</option>
+          <option value="en">EN</option>
+        </select></label>
+      </div>
+      <span class="hint">Tip: กด <b>Space</b> เพื่อดึงใจกลับมาที่ลมหายใจ • Click nodes to “notice” them.</span>
+    </div>
+
+    <div class="legend">
+      <div class="card"><h4>รูป (Form)</h4><p>รูปธรรม—ร่างกาย อวัยวะ ประสาทสัมผัส วัตถุภายนอก</p></div>
+      <div class="card"><h4>เวทนา (Feeling)</h4><p>สุข ทุกข์ เฉย ๆ ที่เกิดตามผัสสะ</p></div>
+      <div class="card"><h4>สัญญา (Perception)</h4><p>การจำได้หมายรู้ การติดป้ายชื่อ/แบบแผน</p></div>
+      <div class="card"><h4>สังขาร (Formations)</h4><p>ความคิดปรุงแต่ง เจตนา นิสัย การผลักดันการกระทำ</p></div>
+    </div>
+
+    <div id="log" aria-live="polite"></div>
+  </main>
+
+  <script>
+    // --- Geometry & State ---
+    const board = document.getElementById('board');
+    const mind = document.getElementById('mind');
+    const trail = document.getElementById('trail');
+    const nodesG = document.getElementById('nodes');
+    const logEl = document.getElementById('log');
+
+    const NODES = [
+      { th:'รูป', en:'Form', x:450, y:110, hint:'กาย วัตถุ ประสาทสัมผัส' },
+      { th:'เวทนา', en:'Feeling', x:720, y:300, hint:'สุข ทุกข์ เฉย ๆ' },
+      { th:'สัญญา', en:'Perception', x:450, y:490, hint:'จำได้หมายรู้ ติดป้ายชื่อ' },
+      { th:'สังขาร', en:'Formations', x:180, y:300, hint:'คิดปรุงแต่ง เจตนา นิสัย' },
+    ];
+    const CENTER = { x:450, y:300 };
+
+    let running = true;
+    let speed = 1.0;          // multiplier
+    let jitterOn = true;      // add small random drift
+    let autoHome = false;     // occasionally return to breath
+    let soundOn = true;       // audio toggle
+
+    let pos = { x:CENTER.x, y:CENTER.y };
+    let tail = [];
+    let targetIdx = 0;
+    let lastTick = performance.now();
+    let nextHopAt = lastTick + 1200; // ms
+
+    // --- Audio (WebAudio) ---
+    let audioCtx = null, master = null;
+    function initAudio(){
+      if(audioCtx) return;
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if(!Ctx) return;
+      audioCtx = new Ctx();
+      master = audioCtx.createGain();
+      master.gain.value = 0.25; // master volume
+      master.connect(audioCtx.destination);
+    }
+    // Auto-init on first user gesture (required by browsers)
+    document.addEventListener('click', initAudio, { once:true });
+    document.addEventListener('keydown', initAudio, { once:true });
+
+    function ping(freq=660, dur=0.22){
+      if(!soundOn || !audioCtx) return;
+      const t = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(freq, t);
+      o.frequency.exponentialRampToValueAtTime(freq*1.45, t+dur*0.6);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.22, t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+      o.connect(g); g.connect(master);
+      o.start(t); o.stop(t+dur+0.02);
+    }
+
+    function bell(){
+      if(!soundOn || !audioCtx) return;
+      const t = audioCtx.currentTime;
+      const freqs = [660, 880, 1320];
+      freqs.forEach((f,i)=>{
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(f, t);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.25/(i+1), t+0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t+0.9+0.2*i);
+        o.connect(g); g.connect(master);
+        o.start(t); o.stop(t+1.1+0.2*i);
+      });
+    }
+
+    // --- UI wiring ---
+    const $ = (id) => document.getElementById(id);
+    $('toggle').addEventListener('click', () => {
+      running = !running;
+      $('toggle').textContent = running ? '⏸ Pause' : '▶︎ Resume';
+      $('toggle').classList.toggle('primary', running);
+      if (running) { lastTick = performance.now(); loop(); }
+    });
+    $('home').addEventListener('click', () => returnHome());
+    $('speed').addEventListener('input', (e)=> speed = parseFloat(e.target.value));
+    $('jitter').addEventListener('change', (e)=> jitterOn = e.target.checked);
+    $('autoHome').addEventListener('change', (e)=> autoHome = e.target.checked);
+    $('soundOn').addEventListener('change', (e)=> soundOn = e.target.checked);
+
+    $('lang').addEventListener('change', (e)=> setLanguage(e.target.value));
+    function setLanguage(mode){
+      nodesG.querySelectorAll('.node').forEach((g,i)=>{
+        const [th,en] = g.querySelectorAll('text');
+        if(mode==='th'){ th.style.display=''; en.style.display='none'; }
+        else if(mode==='en'){ th.style.display='none'; en.style.display=''; }
+        else { th.style.display=''; en.style.display=''; }
+      });
+    }
+
+    document.addEventListener('keydown', (e)=>{ if(e.code==='Space'){ e.preventDefault(); returnHome(true); }});
+
+    // Click nodes to steer
+    nodesG.querySelectorAll('.node').forEach(nodeEl => {
+      nodeEl.style.cursor = 'pointer';
+      nodeEl.addEventListener('click', () => {
+        const idx = parseInt(nodeEl.getAttribute('data-idx'));
+        hopTo(idx);
+        note(`👁️‍🗨️ Noticing ${NODES[idx].th} / ${NODES[idx].en}`);
+      });
+    });
+
+    function note(t){
+      const now = new Date();
+      const ts = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      logEl.textContent = `[${ts}] ${t}\n` + logEl.textContent.split('\n').slice(0,60).join('\n');
+    }
+
+    // --- Motion helpers ---
+    function lerp(a,b,t){ return a + (b-a)*t }
+    function easeInOut(t){ return t<.5 ? 2*t*t : -1+(4-2*t)*t }
+
+    function moveTo(x,y,duration=900){
+      const start = { x: pos.x, y: pos.y };
+      const t0 = performance.now();
+      const D = Math.max(200, duration / speed);
+
+      return new Promise(res=>{
+        function step(){
+          const t = (performance.now() - t0) / D;
+          const e = easeInOut(Math.min(1, t));
+          pos.x = lerp(start.x, x, e);
+          pos.y = lerp(start.y, y, e);
+          renderMind();
+          if(t<1) requestAnimationFrame(step); else res();
+        }
+        requestAnimationFrame(step);
+      });
+    }
+
+    function jitter(dt){
+      if(!jitterOn) return;
+      const mag = 6 * (1/Math.max(.6,speed));
+      pos.x += (Math.random()-.5) * mag * (dt/16);
+      pos.y += (Math.random()-.5) * mag * (dt/16);
+    }
+
+    // Trail rendering (keep last 80 points)
+    function renderMind(){
+      mind.setAttribute('cx', pos.x.toFixed(2));
+      mind.setAttribute('cy', pos.y.toFixed(2));
+      tail.push([pos.x, pos.y]);
+      if(tail.length>80) tail.shift();
+      trail.setAttribute('points', tail.map(p=>p.map(n=>n.toFixed(1)).join(',')).join(' '));
+    }
+
+    // Ripple effect on arrival
+    function ripple(x,y){
+      const r = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      r.setAttribute('cx', x); r.setAttribute('cy', y); r.setAttribute('r', 0);
+      r.setAttribute('fill','none'); r.setAttribute('stroke','#7af6ff'); r.setAttribute('stroke-opacity','.7'); r.setAttribute('filter','url(#pulseBlur)');
+      board.appendChild(r);
+      const t0 = performance.now();
+      const D = 900 / speed;
+      (function anim(){
+        const t = (performance.now()-t0)/D; const e = Math.min(1,t);
+        r.setAttribute('r', (8 + 54*e).toFixed(2));
+        r.setAttribute('stroke-opacity', (0.7*(1-e)).toFixed(2));
+        if(t<1) requestAnimationFrame(anim); else board.removeChild(r);
+      })();
+    }
+
+    // Plan next hop
+    function pickNextIndex(){
+      let idx = Math.floor(Math.random()*NODES.length);
+      // avoid immediate repeats by nudging
+      if(idx===targetIdx) idx = (idx+1)%NODES.length;
+      return idx;
+    }
+
+    async function hopTo(idx){
+      targetIdx = idx;
+      const t = NODES[idx];
+      await moveTo(t.x, t.y, 900);
+      ripple(t.x, t.y);
+      // subtle tone per node
+      ping(540 + idx*90, 0.22);
+      // dwell a bit
+      await new Promise(r => setTimeout(r, 400/Math.max(.5,speed)));
+      // schedule next
+      nextHopAt = performance.now() + (1200/Math.max(.6,speed));
+    }
+
+    async function returnHome(byKey=false){
+      await moveTo(CENTER.x, CENTER.y, 700);
+      ripple(CENTER.x, CENTER.y);
+      bell();
+      note(`${byKey?'⎵ ':'↩︎ '}กลับมาที่ลมหายใจ / Returned to breath`);
+      nextHopAt = performance.now() + (1300/Math.max(.6,speed));
+    }
+
+    // Main loop
+    function loop(ts){
+      if(!running) return;
+      const now = performance.now();
+      const dt = now - lastTick; lastTick = now;
+      jitter(dt);
+      renderMind();
+
+      if(now>=nextHopAt){
+        if(autoHome && Math.random()<0.25){ returnHome(); }
+        else { hopTo(pickNextIndex()); }
+      }
+      requestAnimationFrame(loop);
+    }
+
+    // Initialize
+    setLanguage('th-en');
+    note('เริ่มจำลองการภาวนา — ใจจะกระโดดไปที่ รูป/เวทนา/สัญญา/สังขาร เป็นระยะ ๆ');
+    renderMind();
+    loop();
+  </script>
+</body>
+</html>
